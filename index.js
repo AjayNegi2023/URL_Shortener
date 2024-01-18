@@ -1,15 +1,32 @@
 const express = require("express");
+const cookieParser = require("cookie-parser")
+
 const urlRouter = require("./Routes/url");
-require('dotenv').config(); 
+const staticRouter = require("./Routes/StaticRoutes.js")
+const userRouter = require("./Routes/UserRoutes.js");
+
+const URL = require("./Models/URL.js");
+const path = require('path');
+require('dotenv').config();
 const {
   connectToMongoDB
 } = require("./Connection.js");
+const {
+  restrictUser,
+  chechAuth
+} = require("./middleware/auth.js");
 const app = express();
 const PORT = 8000;
 
-const URL = process.env.MONGO_DB;
-console.log(URL)
-connectToMongoDB(URL)
+
+//SSR
+app.set("view engine", "ejs")
+app.set("views", path.resolve("./views"));
+
+
+const mongo_URL = process.env.MONGO_DB;
+console.log(mongo_URL)
+connectToMongoDB(mongo_URL)
   .then(() => {
     console.log("MongoDB Connected");
   })
@@ -17,8 +34,16 @@ connectToMongoDB(URL)
     console.log("MongoDB error " + error);
   });
 
+
 app.use(express.json()); // to get the data req.body
-app.use("/url", urlRouter);
+app.use(express.urlencoded({
+  extended: false
+}));
+app.use(cookieParser());
+
+app.use("/user", userRouter);
+app.use("/url", restrictUser, urlRouter);
+app.use("/", chechAuth, staticRouter);
 
 app.listen(PORT, () => {
   console.log(`The server is running on PORT ${PORT}`);

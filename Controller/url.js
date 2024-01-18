@@ -12,19 +12,23 @@ async function handleGenerateNewShortURL(req, res) {
     shortId: shortID,
     redirectURL: body.url,
     visitHistory: [],
+    createdBy: req.user._id
   });
 
-  return res.status(201).json({
+  return res.render("home", {
     id: shortID
-  });
+  })
+  // return res.status(201).json({
+  //   id: shortID
+  // });
 }
 
 const handleRefirectURl = async (req, res) => {
-  console.log(req.params.shortId)
-  const shortId = req.params.id;
+  console.log("ShortId" + req.params.shortID)
+  const shortId = req.params.shortID;
   try {
     const entry = await URL.findOneAndUpdate({
-      shortID: shortId
+      shortId: shortId
     }, {
       $push: {
         visitHistory: {
@@ -48,7 +52,7 @@ const handleRefirectURl = async (req, res) => {
 }
 
 const handleGetAnalytics = async (req, res) => {
-  const id = req.param.id;
+  const id = req.params.id;
   // if(!id){
   //   return res.status(404).json({message :"Id is required "})
   // }
@@ -61,8 +65,16 @@ const handleGetAnalytics = async (req, res) => {
     analytics: result.visitHistory
   });
 }
+
+const handleSSRhomePage = async (req, res) => {
+  const allUrls = await URL.find();
+  return res.render("home", {
+    urls: allUrls
+  })
+}
 module.exports = {
   handleGenerateNewShortURL,
   handleRefirectURl,
-  handleGetAnalytics
+  handleGetAnalytics,
+  handleSSRhomePage
 };
